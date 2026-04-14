@@ -14,7 +14,6 @@ source venv/bin/activate
 
 # Demo 1: Single agent (one-shot via query())
 python3 research_agent.py "Topic Name"
-python3 research_agent.py "Topic Name" -o reports/
 
 # Demo 2: Multi-agent orchestrator (streaming via ClaudeSDKClient)
 python3 multi_agent_research.py "Topic Name"
@@ -23,9 +22,8 @@ python3 multi_agent_research.py "Topic Name"
 python3 n8n_hybrid_server.py --port 8000
 curl -X POST http://localhost:8000/research -H "Content-Type: application/json" -d '{"topic":"Topic"}'
 curl -X POST http://localhost:8000/research -H "Content-Type: application/json" -d '{"topic":"Topic","mode":"plan-reflect"}'
-curl http://localhost:8000/health
 
-# Demo 4: Plan-and-Execute + Reflection (structured phases via query())
+# Demo 4: Plan-and-Execute + Reflection (3 query() calls, Haiku+Sonnet)
 python3 plan_reflect_agent.py "Topic Name"
 
 # Demo 5: Multi-Agent + Plan-and-Execute + Reflection (ClaudeSDKClient)
@@ -33,11 +31,12 @@ python3 plan_reflect_multi_agent.py "Topic Name"
 
 # Comparison runner: Demo 1 vs Demo 4 side-by-side
 python3 run_comparison.py "Topic Name"
-```
 
-```bash
 # Run tests (no API calls, all local)
 pytest tests/ -v
+
+# View dashboard
+open static/comparison.html
 ```
 
 ## Architecture
@@ -53,8 +52,12 @@ pytest tests/ -v
 **Shared code (`utils.py`):**
 - `slugify()` — filesystem-safe filename generation
 - `strip_preamble()` — removes non-Markdown artifacts from agent output
+- `check_report_structure()` — validates plan-reflect output sections
 - `BASIC_SYSTEM_PROMPT` — system prompt for Demos 1, 3 (basic mode)
-- `PLAN_REFLECT_SYSTEM_PROMPT` — system prompt for Demos 3 (plan-reflect mode), 4
+- `PLAN_REFLECT_SYSTEM_PROMPT` — combined system prompt for Demo 3 (plan-reflect mode)
+- `PLAN_PHASE_PROMPT`, `EXECUTE_PHASE_PROMPT`, `REFLECT_PHASE_PROMPT` — phase-specific prompts for Demo 4
+- `RESEARCHER_PROMPT` — sub-agent prompt for Demos 2, 5
+- `DEFAULT_MODEL` (`claude-sonnet-4-6`), `HAIKU_MODEL` (`claude-haiku-4-5-20251001`), `DEFAULT_TOOLS`, `DEFAULT_PERMISSION_MODE`
 
 **Shared patterns across all scripts:**
 - Models: `claude-sonnet-4-6` (execute/research), `claude-haiku-4-5-20251001` (plan/reflect in Demo 4)
@@ -64,6 +67,15 @@ pytest tests/ -v
 - All entry points are `async def` with `asyncio.run()`
 - Cost extracted from `ResultMessage.total_cost_usd`
 - Reports saved to `output/` with pattern-specific prefixes
+
+## Testing
+
+42 pytest tests covering utils, prompt structure, and output parsing. All run locally without API calls.
+
+```bash
+pytest tests/ -v        # all tests
+pytest tests/test_utils.py -v  # single file
+```
 
 ## Dependencies
 
