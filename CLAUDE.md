@@ -35,7 +35,10 @@ python3 plan_reflect_multi_agent.py "Topic Name"
 python3 run_comparison.py "Topic Name"
 ```
 
-No test suite, linter, or build step exists. Testing is manual via CLI runs.
+```bash
+# Run tests (no API calls, all local)
+pytest tests/ -v
+```
 
 ## Architecture
 
